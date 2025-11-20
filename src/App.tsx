@@ -60,12 +60,15 @@ function App() {
       {/* Navigation */}
       <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md py-4 shadow-sm' : 'bg-transparent py-8'}`}>
         <div className="container mx-auto px-6 flex justify-between items-center">
-          <div className="text-xl sm:text-2xl font-display font-bold tracking-tighter text-brand-dark">
-            EV<span className="text-brand-teal">SOUND</span> <span className="text-black ml-1">PEST CONTROL</span>
+          <div className="flex items-center gap-3">
+            <img src="/ev-sound-shield.svg" alt="Environmentally Sound" className="h-10 w-auto" />
+            <div className="text-xl sm:text-2xl font-display font-bold tracking-tighter text-brand-dark">
+              EV<span className="text-brand-teal">SOUND</span> <span className="text-black ml-1">PEST CONTROL</span>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <img src="/green-shield-logo.svg" alt="Green Shield Certified" className="h-12 w-auto hidden sm:block" />
-            <button 
+            <button
               onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
               className="bg-brand-dark text-white px-6 py-2 font-display uppercase tracking-wider hover:bg-brand-teal transition-colors"
             >
