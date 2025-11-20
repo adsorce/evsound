@@ -25,6 +25,10 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build 🏗️
+        env:
+          VITE_EMAILJS_SERVICE_ID: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
+          VITE_EMAILJS_TEMPLATE_ID: ${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}
+          VITE_EMAILJS_PUBLIC_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
         run: npm run build
 
       # Create the CNAME file in dist explicitly before deploying to be safe

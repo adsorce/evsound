@@ -10,7 +10,7 @@ interface MarqueeProps {
 const Marquee: React.FC<MarqueeProps> = ({ items, direction = 'left', className = '' }) => {
   return (
     <div className={`relative flex overflow-hidden py-6 bg-brand-dark text-white ${className}`}>
-      <div className="animate-marquee whitespace-nowrap flex">
+      <div className="animate-marquee whitespace-nowrap flex" style={{ animationDelay: '-0.5s' }}>
         {items.map((item, index) => (
           <span key={index} className="mx-8 text-xl font-display tracking-widest uppercase opacity-80">
             {item} •

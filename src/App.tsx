@@ -1,17 +1,58 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Marquee from './components/Marquee';
-import { Shield, CheckCircle, ArrowRight, Phone, Mail } from 'lucide-react';
+import { Shield, CheckCircle, ArrowRight, Phone, Mail, ChevronDown } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 
 function App() {
   const [scrolled, setScrolled] = useState(false);
+  const [shieldInView, setShieldInView] = useState(false);
+  const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
+
+      // Check if green shield section is in view
+      const shieldSection = document.getElementById('green-shield-section');
+      if (shieldSection) {
+        const rect = shieldSection.getBoundingClientRect();
+        const isInView = rect.top < window.innerHeight && rect.bottom > 0;
+        setShieldInView(isInView);
+      }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!formRef.current) return;
+
+    setFormStatus('sending');
+
+    try {
+      await emailjs.sendForm(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        formRef.current,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+
+      setFormStatus('success');
+      formRef.current.reset();
+
+      // Reset success message after 5 seconds
+      setTimeout(() => setFormStatus('idle'), 5000);
+    } catch (error) {
+      console.error('EmailJS error:', error);
+      setFormStatus('error');
+
+      // Reset error message after 5 seconds
+      setTimeout(() => setFormStatus('idle'), 5000);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-brand-teal selection:text-brand-dark">
@@ -47,8 +88,8 @@ function App() {
             <p className="text-sm sm:text-xl text-slate-600 max-w-md leading-relaxed mb-6 lg:mb-10 font-light">
               High-performance pest management for New York's most sensitive environments. Hospitals, food plants, and commercial facilities rely on our science-led precision.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button 
+            <div className="hidden sm:flex flex-col sm:flex-row gap-4">
+              <button
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                 className="flex items-center justify-center gap-2 bg-brand-dark text-white px-6 py-3 lg:px-8 lg:py-4 font-display text-sm lg:text-lg uppercase tracking-wide hover:bg-slate-800 transition-all"
               >
@@ -81,22 +122,22 @@ function App() {
 
       {/* Infinite Marquee */}
       <Marquee items={[
-        "Hospitals", "Food Distribution", "Nursing Homes", "Pharmaceutical", "LEED Certified", 
-        "School Districts", "Office Complexes", "Manufacturing"
+        "LEED Certified", "Nursing Homes", "Pharmaceutical", "Hospitals",
+        "School Districts", "Office Complexes", "Manufacturing", "Food Distribution"
       ]} />
 
       {/* Green Shield Certification Section */}
-      <section className="py-24 bg-brand-dark text-white relative overflow-hidden">
+      <section id="green-shield-section" className="py-24 bg-brand-dark text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-brand-green/10 skew-x-12 transform origin-top-right"></div>
         
         <div className="container mx-auto px-6 relative z-10">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             
             <div>
-              <div className="bg-white p-8 rounded-sm max-w-md mx-auto lg:mx-0 rotate-1 hover:rotate-0 transition-transform duration-500">
-                <img 
-                  src="/green-shield-logo.svg" 
-                  alt="Green Shield Certified" 
+              <div className={`bg-white p-8 rounded-sm max-w-md mx-auto lg:mx-0 transition-transform duration-500 ${shieldInView ? 'rotate-0' : 'rotate-1'}`}>
+                <img
+                  src="/green-shield-logo.svg"
+                  alt="Green Shield Certified"
                   className="w-full h-auto"
                 />
               </div>
@@ -174,15 +215,20 @@ function App() {
             ].map((service, idx) => {
               const [isOpen, setIsOpen] = useState(false);
               return (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   onClick={() => setIsOpen(!isOpen)}
-                  className="group py-12 cursor-pointer hover:bg-white transition-all duration-300 px-4"
+                  className={`group py-12 cursor-pointer lg:hover:bg-white transition-all duration-300 px-4 ${isOpen ? 'bg-white' : ''}`}
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between">
-                    <h2 className="text-4xl lg:text-6xl font-display font-bold text-slate-900 group-hover:text-brand-teal transition-colors">
-                      {service.title}
-                    </h2>
+                    <div className="flex items-center justify-between lg:block">
+                      <h2 className="text-4xl lg:text-6xl font-display font-bold text-slate-900 group-hover:text-brand-teal transition-colors">
+                        {service.title}
+                      </h2>
+                      <div className={`lg:hidden transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                        <ChevronDown className={`${isOpen ? 'text-brand-teal' : 'text-slate-400'}`} size={24} strokeWidth={3} />
+                      </div>
+                    </div>
                     <div className="flex items-center gap-4 mt-4 lg:mt-0">
                       <p className="text-slate-500 max-w-md lg:text-right group-hover:text-brand-dark transition-colors">
                         {service.desc}
@@ -192,7 +238,7 @@ function App() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className={`grid transition-all duration-500 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100 mt-8' : 'grid-rows-[0fr] opacity-0 mt-0'}`}>
                     <div className="overflow-hidden">
                       <p className="text-lg text-slate-700 leading-relaxed max-w-3xl border-l-4 border-brand-teal pl-6">
@@ -222,38 +268,66 @@ function App() {
               <div className="bg-slate-50 p-8 rounded-sm border border-slate-200">
                 <h4 className="font-display font-bold text-xl mb-4">Direct Line</h4>
                 <p className="text-slate-600 mb-6">For emergency commercial response:</p>
-                <a href="tel:5551234567" className="text-3xl font-display font-bold text-brand-dark hover:text-brand-teal transition-colors">
-                  (555) 123-4567
+                <a href="tel:8666207171" className="text-3xl font-display font-bold text-brand-dark hover:text-brand-teal transition-colors">
+                  (866) 620-7171
                 </a>
               </div>
             </div>
 
-            <form className="bg-slate-50 p-8 lg:p-12 rounded-sm border border-slate-200 shadow-sm" onSubmit={(e) => e.preventDefault()}>
+            <form ref={formRef} className="bg-slate-50 p-8 lg:p-12 rounded-sm border border-slate-200 shadow-sm" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Name</label>
-                  <input type="text" className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors" placeholder="Jane Doe" />
+                  <input
+                    type="text"
+                    name="user_name"
+                    required
+                    className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors"
+                    placeholder="Jane Doe"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Company</label>
-                  <input type="text" className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors" placeholder="Facility Name" />
+                  <input
+                    type="text"
+                    name="company"
+                    required
+                    className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors"
+                    placeholder="Facility Name"
+                  />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Email</label>
-                  <input type="email" className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors" placeholder="jane@company.com" />
+                  <input
+                    type="email"
+                    name="user_email"
+                    required
+                    className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors"
+                    placeholder="jane@company.com"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Phone</label>
-                  <input type="tel" className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors" placeholder="(555) 123-4567" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    required
+                    className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors"
+                    placeholder="(866) 620-7171"
+                  />
                 </div>
               </div>
 
               <div className="mb-6">
                 <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Facility Type</label>
-                <select className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors text-slate-600">
+                <select
+                  name="facility_type"
+                  required
+                  className="w-full bg-white border border-slate-300 px-4 py-3 focus:outline-none focus:border-brand-teal transition-colors text-slate-600"
+                >
                   <option>Healthcare / Hospital</option>
                   <option>Food Processing / Distribution</option>
                   <option>Nursing Home / Long-Term Care</option>
@@ -265,11 +339,32 @@ function App() {
 
               <div className="mb-8">
                 <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Message</label>
-                <textarea className="w-full bg-white border border-slate-300 px-4 py-3 h-32 focus:outline-none focus:border-brand-teal transition-colors" placeholder="Describe your pest concern or compliance requirements..."></textarea>
+                <textarea
+                  name="message"
+                  required
+                  className="w-full bg-white border border-slate-300 px-4 py-3 h-32 focus:outline-none focus:border-brand-teal transition-colors"
+                  placeholder="Describe your pest concern or compliance requirements..."
+                ></textarea>
               </div>
 
-              <button className="w-full bg-brand-dark text-white font-display font-bold uppercase tracking-widest py-4 hover:bg-brand-teal transition-colors">
-                Request Consultation
+              {formStatus === 'success' && (
+                <div className="mb-6 p-4 bg-brand-green/10 border border-brand-green rounded text-brand-dark font-bold">
+                  ✓ Thank you! Your message has been sent successfully.
+                </div>
+              )}
+
+              {formStatus === 'error' && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-300 rounded text-red-700 font-bold">
+                  ✗ Something went wrong. Please try again or call us directly.
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={formStatus === 'sending'}
+                className="w-full bg-brand-dark text-white font-display font-bold uppercase tracking-widest py-4 hover:bg-brand-teal transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+              >
+                {formStatus === 'sending' ? 'Sending...' : 'Request Consultation'}
               </button>
             </form>
           </div>
@@ -285,8 +380,8 @@ function App() {
               Protecting New York's most critical infrastructure with science, safety, and sustainability.
             </p>
             <div className="flex gap-4">
-              <img src="/ev-sound-shield.svg" className="h-16 w-auto opacity-80 grayscale hover:grayscale-0 transition-all" />
-              <img src="/green-shield-logo.svg" className="h-16 w-auto opacity-80 grayscale hover:grayscale-0 transition-all" />
+              <img src="/ev-sound-shield.svg" className="h-16 w-auto transition-all" />
+              <img src="/green-shield-logo.svg" className="h-16 w-auto transition-all" />
             </div>
           </div>
           
@@ -294,13 +389,13 @@ function App() {
             <h4 className="font-display font-bold text-lg mb-6 tracking-wider text-brand-teal">CONTACT</h4>
             <ul className="space-y-4 text-slate-300">
               <li className="flex items-center gap-3">
-                <Phone size={18} /> (555) 123-4567
+                <Phone size={18} /> (866) 620-7171
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={18} /> hello@evsoundpestcontrol.com
               </li>
               <li>
-                Long Island & NYC<br/>
+                NYC | Long Island | Tri-State<br/>
                 Commercial Services Division
               </li>
             </ul>
