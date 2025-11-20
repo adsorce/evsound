@@ -297,7 +297,7 @@ function App() {
                 <Phone size={18} /> (555) 123-4567
               </li>
               <li className="flex items-center gap-3">
-                <Mail size={18} /> info@evsoundpest.com
+                <Mail size={18} /> hello@evsoundpestcontrol.com
               </li>
               <li>
                 Long Island & NYC<br/>

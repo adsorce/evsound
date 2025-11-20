@@ -27,8 +27,13 @@ jobs:
       - name: Build 🏗️
         run: npm run build
 
+      # Create the CNAME file in dist explicitly before deploying to be safe
+      - name: Copy CNAME to build folder
+        run: cp public/CNAME dist/CNAME
+
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
           branch: gh-pages
+          clean: true # Automatically remove deleted files from the deploy branch
